@@ -1,11 +1,26 @@
+/*
+ File Main.js: React component loosely based on:
+    
+    Copyright (c) 1986-88 Randall H. Wilson
+ Updated by S. Davidoff 2020
+*/
+
 import React from "react"
-//import "./Main.css"
 import GW from "./GW"
+import Planet from "./Planet"
 
 function Main() {
   const canvasEl = React.useRef(null)
   const requestRef = React.useRef()
   const zoom = 1
+
+  const [score, setScore] = React.useState(0)
+  const [fuel, setFuel] = React.useState(GW.game.FUELSTART)
+  const [numships, setNumships] = React.useState(GW.game.SHIPSTART)
+  const [endofgame, setEndofgame] = React.useState(false)
+  const [currentlevel, setCurrentlevel] = React.useState(1)
+  const [currentplanet, setCurrentplanet] = React.useState({})
+  const [planetsIndex, setPlanetsIndex] = React.useState([])
 
   const [ball, setBall] = React.useState({ x: 0, y: 0 })
   const [ctx, setContext] = React.useState(null)
@@ -54,6 +69,7 @@ function Main() {
         width={GW.dimensions.SCRWTH * zoom}
         height={GW.dimensions.SCRHT * zoom}
       />
+      <Planet />
     </div>
   )
 }

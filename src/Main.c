@@ -14,21 +14,21 @@ char planetscrapfile[] = "\pPlanet_Clipboard";
 char figurefile[] = "\pC Figures in Grid";
 char sbarfile[] = "\pC Screen Top";
 */
-char worldsfilep[80] = "\pContinuum Galaxy";
+char worldsfilep[80] = "\pcontinuum galaxy";
 
 
 extern long score;
 extern int fuel;
 extern int cartooning;
 extern int numships, endofgame;
-extern linerec lines[NUMLINES];
-extern bunkrec bunkers[NUMBUNKERS];
-extern fuelrec fuels[NUMFUELS];
+extern linerec lines[numlines];
+extern bunkrec bunkers[numbunkers];
+extern fuelrec fuels[numfuels];
 extern craterrec craters[];
 extern int worldwidth, worldheight, worldwrap, shootslow;
 extern int xstart, ystart, planetbonus, numcraters;
 extern int gravx, gravy;
-extern char cartoon[CARTOONSIZE*2];
+extern char cartoon[cartoonsize*2];
 extern int xlength[], ylength[], slopes2[], intfilter();
 
 
@@ -1104,4 +1104,4 @@ init_sound()
 
 
 
-
+
