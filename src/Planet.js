@@ -51,18 +51,37 @@ const Planet = () => {
     ctx.fillStyle = "#000"
     ctx.beginPath()
     ctx.fillRect(0, 0, worldwidth, worldheight)
+    ctx.stroke()
     ctx.strokeStyle = "#FFF"
     ctx.lineWidth = 2
-    //    lines.map(line => {
-    //      ctx.moveTo(line.startx, line.starty)
-    //      ctx.lineTo(line.endx, line.endy)
-    //    })
     for (let line of lines) {
+      //necessary because original app assumed everything past a
+      //the first 'wrong' entry was also 'wrong'
       if (line.startx === 10000) break
+      ctx.beginPath()
+      let color
+      switch (line.kind) {
+        case 0: //normal
+          color = "white"
+          break
+        case 1: //bounce
+          color = "green"
+          break
+        case 2: //ghost
+          color = "gray"
+          break
+        case 3: //explode
+          color = "red"
+          break
+        default:
+          color = "white"
+          break
+      }
+      ctx.strokeStyle = color
       ctx.moveTo(line.startx, line.starty)
       ctx.lineTo(line.endx, line.endy)
+      ctx.stroke()
     }
-    ctx.stroke()
     ctx.restore()
   }
 
