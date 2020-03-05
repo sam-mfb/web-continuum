@@ -2,18 +2,70 @@ import React from "react"
 import GW from "./GW"
 
 const Planet = () => {
-  //The original function
-  //read_header()
-  //{
-  //	SetFPos(wfile, fsFromStart, 0L);		/* read the indexes */
-  //	if (getw(wfile) != -17)
-  //		ExitToShell();
-  //	planets = getw(wfile);
-  //	cartplanet = getw(wfile);
-  //	SetFPos(wfile, fsFromStart, 10L);
-  //	macread(wfile, sizeof(indexes), indexes);
-  //}
-  //
+  const canvasEl = React.useRef(null)
+  const galaxyRef = React.useRef(null)
+  const indexRef = React.useRef(null)
+
+  const [currLevel, setCurrLevel] = React.useState(0)
+  const [showError, setShowError] = React.useState(false)
+  const [errorText, setErrorText] = React.useState("")
+  const [numPlanets, setNumPlanets] = React.useState(0)
+  const [demoPlanet, setDemoPlanet] = React.useState(0)
+  const [showControls, setShowControls] = React.useState(false)
+  const [canvasHeight, setCanvasHeight] = React.useState(0)
+  const [canvasWidth, setCanvasWidth] = React.useState(0)
+
+  React.useEffect(() => {
+    if (galaxyRef.current !== null && indexRef.current !== null) {
+      selectAndDrawPlanet()
+    } else {
+      setErrorText("You need to load a galaxy file")
+      setShowError(true)
+    }
+  }, [currLevel, canvasWidth, canvasHeight])
+
+  const ylength = [0, 2, 2, 2, 1, 0] //basically a rough table that looks up 2xsin
+  const xlength = [0, 0, 1, 2, 2, 2] //basically a rough table that looks up 2xcos
+
+  const handleNext = e => {
+    e.preventDefault()
+    if (currLevel < numPlanets) setCurrLevel(prevLevel => prevLevel + 1)
+  }
+
+  const handlePrev = e => {
+    e.preventDefault()
+    if (currLevel > 1) setCurrLevel(prevLevel => prevLevel - 1)
+  }
+
+  const selectAndDrawPlanet = () => {
+    const planet = getPlanet(galaxyRef.current, indexRef.current, currLevel)
+    setCanvasWidth(planet.worldwidth)
+    setCanvasHeight(planet.worldheight)
+    drawPlanet(planet)
+    console.log(planet)
+  }
+
+  const drawPlanet = ({ lines, worldwidth, worldheight }) => {
+    const ctx = canvasEl.current.getContext("2d")
+    ctx.save()
+    ctx.fillStyle = "#000"
+    ctx.beginPath()
+    ctx.fillRect(0, 0, worldwidth, worldheight)
+    ctx.strokeStyle = "#FFF"
+    ctx.lineWidth = 2
+    //    lines.map(line => {
+    //      ctx.moveTo(line.startx, line.starty)
+    //      ctx.lineTo(line.endx, line.endy)
+    //    })
+    for (let line of lines) {
+      if (line.startx === 10000) break
+      ctx.moveTo(line.startx, line.starty)
+      ctx.lineTo(line.endx, line.endy)
+    }
+    ctx.stroke()
+    ctx.restore()
+  }
+
   // Header structure:
   // first word (2 bytes) = ffef i.e. -17 in 2s complement
   // second word = number of planets
@@ -28,17 +80,6 @@ const Planet = () => {
   // into the first char in the index and use that as an offset using
   // the PLANSIZE variable
 
-  const [galaxyState, setGalaxy] = React.useState([])
-  const [showError, setShowError] = React.useState(false)
-  const [errorText, setErrorText] = React.useState("")
-  const [numPlanets, setNumPlanets] = React.useState(0)
-  const [demoPlanet, setDemoPlanet] = React.useState(0)
-  const [planetIndex, setPlanetIndex] = React.useState([])
-  const [currPlanet, setCurrPlanet] = React.useState(null)
-
-  const ylength = [0, 2, 2, 2, 1, 0] //basically a rough table that looks up 2xsin
-  const xlength = [0, 0, 1, 2, 2, 2] //basically a rough table that looks up 2xcos
-
   const readPlanetsHeader = galaxy => {
     if (galaxy[0] !== 255 && galaxy[1] !== 239) {
       setErrorText("Not a valid galaxy file")
@@ -46,9 +87,12 @@ const Planet = () => {
     } else {
       setNumPlanets(galaxy[3])
       setDemoPlanet(galaxy[5])
-      const index = galaxy.slice(10, galaxy[3])
-      setPlanetIndex(index)
-      getPlanet(galaxy, index, 1)
+      const index = galaxy.slice(10, 10 + galaxy[3])
+      indexRef.current = index
+      galaxyRef.current = galaxy
+      setShowError(false)
+      setShowControls(true)
+      setCurrLevel(1)
     }
   }
 
@@ -93,7 +137,8 @@ const Planet = () => {
         line.length |= 1 //make length an odd number
       //rough version of pythagorean theorum using sin/cos tables above
       line.endx = line.startx + ((xlength[line.type] * line.length) >> 1)
-      line.endy = line.starty + ((ylength[line.type] * line.length) >> 1)
+      line.endy =
+        line.starty + line.up_down * ((ylength[line.type] * line.length) >> 1)
       //convert to newtype that eliminates up/down -- before south was north, down etc
       line.newType = line.up_down === -1 ? 10 - line.type : line.type
       if (!line.type || line.endx > 4000 || line.starty > 4000)
@@ -122,9 +167,7 @@ const Planet = () => {
       planetObj.fuels.push(fuel)
     }
 
-    //    let newLines = planetObj.lines.filter(line => line.startx < 10000)
-    //    planetObj.lines = newLines
-    setCurrPlanet(planetObj)
+    return planetObj
   }
 
   let fileReader
@@ -132,7 +175,6 @@ const Planet = () => {
   const handleFileLoaded = () => {
     const blob = fileReader.result
     const galaxyFile = new Uint8Array(blob)
-    //setGalaxy(galaxyFile) //seems to take a while....
     readPlanetsHeader(galaxyFile)
   }
 
@@ -143,17 +185,37 @@ const Planet = () => {
   }
 
   return (
-    <form className="planet-upload">
-      <input
-        type="file"
-        onChange={e => handleFileUploaded(e.target.files[0])}
-      />
-      {showError && <div>Error: {errorText}</div>}
-      <ul>
-        <li>Number of Planets: {numPlanets}</li>
-        <li>Demo/Cartoon Planet: {demoPlanet}</li>
-      </ul>
-    </form>
+    <div>
+      <form className="planet-upload">
+        <input
+          type="file"
+          onChange={e => handleFileUploaded(e.target.files[0])}
+        />
+        {showError && <div>Error: {errorText}</div>}
+        <ul>
+          <li>Number of Planets: {numPlanets}</li>
+          <li>Demo/Cartoon Planet: {demoPlanet}</li>
+        </ul>
+      </form>
+      {showControls && (
+        <form className="select-planet">
+          <input
+            onChange={e => setCurrLevel(e.target.value)}
+            value={currLevel}
+            type="number"
+            min="1"
+            max={numPlanets}
+          />
+          <input
+            type="button"
+            value="<- Previous Planet"
+            onClick={handlePrev}
+          />
+          <input type="button" value="Next Planet ->" onClick={handleNext} />
+        </form>
+      )}
+      <canvas ref={canvasEl} width={canvasWidth} height={canvasHeight} />
+    </div>
   )
 }
 
