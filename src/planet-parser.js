@@ -151,11 +151,12 @@ const getPlanet = (planetsBuffer, planetIndex, planet) => {
       x: getInt16BE(planetDV, (ip += incr)),
       y: getInt16BE(planetDV, (ip += incr)),
       rot: getInt16BE(planetDV, (ip += incr)),
-      ranges: [],
+      ranges: [{}, {}],
       alive: true
     }
-    for (let j = 0; j < 4; j++) {
-      bunker.ranges.push(getInt16BE(planetDV, (ip += incr)))
+    for (let j = 0; j < 2; j++) {
+      bunker.ranges[j].low = getInt16BE(planetDV, (ip += incr))
+      bunker.ranges[j].high = getInt16BE(planetDV, (ip += incr))
     }
     //A rotation ('rot') value of -1 means the bunker is 'kind' 0,
     //which doesn't have a rotation [or gets it from the wall?]  Otherwise,
