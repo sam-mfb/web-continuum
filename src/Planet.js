@@ -90,6 +90,7 @@ const Planet = () => {
     drawBunkers(ctx, planet.bunkers)
     drawFuels(ctx, planet.fuels)
     drawCraters(ctx, planet.craters)
+    drawShip(ctx, planet.xstart, planet.ystart)
   }
 
   const drawLines = (ctx, lines) => {
@@ -200,6 +201,24 @@ const Planet = () => {
       ctx.arc(crater.x, crater.y, 6, 0, 2 * Math.PI)
       ctx.fill()
     })
+    ctx.restore()
+  }
+
+  const drawShip = (ctx, x, y) => {
+    console.log(x, y)
+    ctx.save()
+    ctx.lineWidth = 1
+    ctx.strokeStyle = "white"
+    //x^2 + h^2 = 4x^2
+    //h^2 = 3x^2
+    //x-jjjsqrt3/h
+    //1/x= h/sqrt3
+    ctx.beginPath()
+    ctx.moveTo(x, y - 16)
+    ctx.lineTo(x + 32 / Math.sqrt(3), y + 16)
+    ctx.lineTo(x - 32 / Math.sqrt(3), y + 16)
+    ctx.lineTo(x, y - 16)
+    ctx.stroke()
     ctx.restore()
   }
 
