@@ -2,9 +2,10 @@ import React from "react"
 import ReactDOM from "react-dom"
 import "./index.css"
 import Planet from "./Planet"
+import Draw from "./Draw"
 import * as serviceWorker from "./serviceWorker"
 
-ReactDOM.render(<Planet />, document.getElementById("root"))
+ReactDOM.render(<Draw />, document.getElementById("root"))
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
