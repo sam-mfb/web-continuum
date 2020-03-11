@@ -3,6 +3,7 @@ import { flames, strafe_defs } from "./bitmaps"
 
 const Draw = () => {
   const canvasEl = React.useRef(null)
+  const [bitmap, setBitmap] = React.useState(null)
 
   const insertBackground = (bytes, rev) => {
     for (let x = 0; x < bytes.length; x += 2) {
@@ -19,6 +20,7 @@ const Draw = () => {
     bArray.push(255)
     return bArray
   }
+
   const whitePixel = bArray => {
     bArray.push(255)
     bArray.push(255)
@@ -26,6 +28,7 @@ const Draw = () => {
     bArray.push(255)
     return bArray
   }
+
   const byteToPixels = (byte, bArray) => {
     for (let x = 0; x < 8; x++) {
       let bit = byte >>> x
@@ -34,6 +37,7 @@ const Draw = () => {
     }
     return bArray
   }
+
   const bytesToImageData = bytes => {
     let bArray = []
     for (let byte of bytes) {
@@ -41,6 +45,54 @@ const Draw = () => {
     }
     return new Uint8ClampedArray(bArray)
   }
+
+  const unpackBytes = (intArray, bytePtr, length) => {
+    let unpackedBytes = []
+    while (unpackedBytes.length < length) {
+      let code = intArray[bytePtr]
+      bytePtr++
+      if (code < 128) {
+        let newPtr = bytePtr + code + 1
+        intArray.slice(bytePtr, newPtr).map(byte => unpackedBytes.push(byte))
+        bytePtr = newPtr
+      }
+      if (code > 128) {
+        for (let i = 0; i < 257 - code; i++) {
+          unpackedBytes.push(intArray[bytePtr])
+        }
+        bytePtr++
+      }
+    }
+    return {
+      bytePtr: bytePtr,
+      unpackedArray: new Uint8Array(unpackedBytes)
+    }
+  }
+
+  const handleMacPaint = arraybuffer => {
+    const packedBytes = arraybuffer.slice(512)
+    const unpackedBytes = new Uint8Array(720 * 72)
+    let bytePtr = 0
+    for (let line = 0; line < 720; line++) {
+      let unpackedObj = unpackBytes(packedBytes, bytePtr, 72)
+      bytePtr = unpackedObj.ptr
+      unpackedBytes.set(unpackedObj.intArray, line * 72)
+    }
+    return unpackedBytes
+  }
+
+  function handleXHR() {
+    setBitmap(handleMacPaint(this.response))
+  }
+
+  React.useEffect(() => {
+    const galaxy_loc = process.env.PUBLIC_URL + "/gwfig.bin"
+    const xhr = new XMLHttpRequest()
+    xhr.onload = handleXHR
+    xhr.open("GET", galaxy_loc, true)
+    xhr.responseType = "arraybuffer"
+    xhr.send()
+  }, [])
 
   React.useEffect(() => {
     const ctx = canvasEl.current.getContext("2d")
@@ -58,6 +110,16 @@ const Draw = () => {
     strafeImageData.data.set(strafeData)
     ctx.putImageData(strafeImageData, 150, 150)
   }, [])
+
+  React.useEffect(() => {
+    const ctx = canvasEl.current.getContext("2d")
+
+    const pictBits = new Uint8ClampedArray(bitmap.buffer)
+    let pictData = bytesToImageData(pictBits)
+    const pictImageData = ctx.createImageData(576, 720)
+    pictImageData.data.set(pictData)
+    ctx.putImageData(pictImageData, 100, 300)
+  }, [bitmap])
 
   return (
     <div>
