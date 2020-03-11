@@ -30,7 +30,7 @@ const Draw = () => {
   }
 
   const byteToPixels = (byte, bArray) => {
-    for (let x = 0; x < 8; x++) {
+    for (let x = 7; x >= 0; x--) {
       let bit = byte >>> x
       bit &= 1
       bArray = bit === 1 ? blackPixel(bArray) : whitePixel(bArray)
@@ -62,6 +62,7 @@ const Draw = () => {
         }
         bytePtr++
       }
+      if (code == 128) bytePtr++
     }
     return {
       bytePtr: bytePtr,
@@ -144,7 +145,7 @@ const Draw = () => {
           onChange={e => handleFileUploaded(e.target.files[0])}
         />
       </form>
-      <canvas ref={canvasEl} width="600" height="1200" />
+      <canvas ref={canvasEl} width="1200" height="1200" />
     </div>
   )
 }
