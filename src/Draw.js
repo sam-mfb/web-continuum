@@ -70,19 +70,32 @@ const Draw = () => {
   }
 
   const handleMacPaint = arraybuffer => {
-    const packedBytes = arraybuffer.slice(512)
-    const unpackedBytes = new Uint8Array(720 * 72)
+    const lines = 720
+    const packedBytes = new Uint8Array(arraybuffer.slice(512))
+    const unpackedBytes = new Uint8Array(lines * 72)
     let bytePtr = 0
-    for (let line = 0; line < 720; line++) {
+    for (let line = 0; line < lines; line++) {
       let unpackedObj = unpackBytes(packedBytes, bytePtr, 72)
-      bytePtr = unpackedObj.ptr
-      unpackedBytes.set(unpackedObj.intArray, line * 72)
+      bytePtr = unpackedObj.bytePtr
+      unpackedBytes.set(unpackedObj.unpackedArray, line * 72)
     }
     return unpackedBytes
   }
 
   function handleXHR() {
     setBitmap(handleMacPaint(this.response))
+  }
+
+  const handleFileUploaded = file => {
+    let fileReader = new FileReader()
+    fileReader.onloadend = handleFileLoaded
+    fileReader.readAsArrayBuffer(file)
+  }
+
+  function handleFileLoaded() {
+    const blob = this.result
+    setBitmap(new Uint8Array(720 * 72))
+    setBitmap(handleMacPaint(blob))
   }
 
   React.useEffect(() => {
@@ -114,16 +127,24 @@ const Draw = () => {
   React.useEffect(() => {
     const ctx = canvasEl.current.getContext("2d")
 
-    const pictBits = new Uint8ClampedArray(bitmap.buffer)
-    let pictData = bytesToImageData(pictBits)
-    const pictImageData = ctx.createImageData(576, 720)
-    pictImageData.data.set(pictData)
-    ctx.putImageData(pictImageData, 100, 300)
+    if (bitmap) {
+      const pictBits = new Uint8ClampedArray(bitmap.buffer)
+      let pictData = bytesToImageData(pictBits)
+      const pictImageData = ctx.createImageData(576, 720)
+      pictImageData.data.set(pictData)
+      ctx.putImageData(pictImageData, 100, 300)
+    }
   }, [bitmap])
 
   return (
     <div>
-      <canvas ref={canvasEl} width="600" height="600" />
+      <form className="bitmap-upload">
+        <input
+          type="file"
+          onChange={e => handleFileUploaded(e.target.files[0])}
+        />
+      </form>
+      <canvas ref={canvasEl} width="600" height="1200" />
     </div>
   )
 }
